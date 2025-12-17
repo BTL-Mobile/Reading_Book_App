@@ -21,7 +21,10 @@ class OcrModal extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Chụp ảnh đoạn văn (OCR)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context)
+                ),
               ],
             ),
           ),
@@ -109,13 +112,32 @@ class OcrModal extends StatelessWidget {
     );
   }
 
-  void _goToResult(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const OcrResultScreen())).then((res) {
-      if (res != null) Navigator.pop(context, res);
-    });
+  // Hàm điều hướng đã sửa lỗi Async Gap
+  void _goToResult(BuildContext context) async {
+    // Chờ kết quả trả về từ màn hình OcrResultScreen
+    final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const OcrResultScreen())
+    );
+
+    // QUAN TRỌNG: Kiểm tra xem Widget này còn tồn tại không trước khi dùng context
+    if (!context.mounted) return;
+
+    // Nếu có kết quả trả về (văn bản OCR), đóng Modal này và trả kết quả về màn hình trước
+    if (result != null) {
+      Navigator.pop(context, result);
+    }
   }
 
-  Widget _buildBigButton({required IconData icon, required Color color, required Color bgColor, required String title, required String subtitle, required Color borderColor, required VoidCallback onTap}) {
+  Widget _buildBigButton({
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required String title,
+    required String subtitle,
+    required Color borderColor,
+    required VoidCallback onTap
+  }) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -130,7 +152,10 @@ class OcrModal extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle
+              ),
               child: Icon(icon, color: color, size: 32),
             ),
             const SizedBox(height: 12),
