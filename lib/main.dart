@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart'; // Import Firebase
 // Import màn hình trang chủ (Danh sách ghi chú)
 import 'features/instructor/screens/notes_screen.dart';
 
-void main() {
+void main() async {
+  // Đảm bảo các dịch vụ của Flutter đã sẵn sàng trước khi gọi Firebase
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Khởi tạo Firebase
+  try {
+    await Firebase.initializeApp();
+    debugPrint(">>> KẾT NỐI FIREBASE THÀNH CÔNG!");
+  } catch (e) {
+    debugPrint(">>> LỖI KẾT NỐI FIREBASE: $e");
+  }
+
   runApp(const MyApp());
 }
 
