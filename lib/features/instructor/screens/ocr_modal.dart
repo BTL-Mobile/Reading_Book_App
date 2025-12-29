@@ -72,9 +72,9 @@ class OcrModal extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFFFDE68A)),
                     ),
-                    child: Column(
+                    child: const Column( // Đã thêm const tại dòng 75
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Row(
                           children: [
                             Icon(Icons.lightbulb_outline, size: 18, color: Color(0xFFD97706)),
@@ -112,18 +112,14 @@ class OcrModal extends StatelessWidget {
     );
   }
 
-  // Hàm điều hướng đã sửa lỗi Async Gap
   void _goToResult(BuildContext context) async {
-    // Chờ kết quả trả về từ màn hình OcrResultScreen
     final result = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const OcrResultScreen())
     );
 
-    // QUAN TRỌNG: Kiểm tra xem Widget này còn tồn tại không trước khi dùng context
     if (!context.mounted) return;
 
-    // Nếu có kết quả trả về (văn bản OCR), đóng Modal này và trả kết quả về màn hình trước
     if (result != null) {
       Navigator.pop(context, result);
     }

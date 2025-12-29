@@ -1,4 +1,3 @@
-// File: lib/features/instructor/widgets/move_note_dialog.dart
 import 'package:flutter/material.dart';
 
 class MoveNoteDialog extends StatefulWidget {
@@ -9,7 +8,6 @@ class MoveNoteDialog extends StatefulWidget {
 }
 
 class _MoveNoteDialogState extends State<MoveNoteDialog> {
-  // Danh sách sách để chọn
   final List<String> books = [
     'Deep Work',
     'Thinking, Fast and Slow',
@@ -17,7 +15,7 @@ class _MoveNoteDialogState extends State<MoveNoteDialog> {
     'Đắc Nhân Tâm'
   ];
 
-  String? selectedBook; // Biến lưu cuốn sách được chọn
+  String? selectedBook;
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +25,9 @@ class _MoveNoteDialogState extends State<MoveNoteDialog> {
       child: Container(
         padding: const EdgeInsets.all(24.0),
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Tự co giãn theo nội dung
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Tiêu đề
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -42,7 +39,6 @@ class _MoveNoteDialogState extends State<MoveNoteDialog> {
                     color: Color(0xFF101727),
                   ),
                 ),
-                // Nút đóng (X)
                 InkWell(
                   onTap: () => Navigator.pop(context),
                   child: const Icon(Icons.close, color: Colors.grey),
@@ -51,7 +47,6 @@ class _MoveNoteDialogState extends State<MoveNoteDialog> {
             ),
             const SizedBox(height: 16),
 
-            // 2. Cảnh báo (Hộp màu vàng)
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -59,9 +54,9 @@ class _MoveNoteDialogState extends State<MoveNoteDialog> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFFDE585)),
               ),
-              child: Row(
+              child: const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Icon(Icons.warning_amber_rounded, color: Color(0xFF963B00), size: 20),
                   SizedBox(width: 8),
                   Expanded(
@@ -75,17 +70,16 @@ class _MoveNoteDialogState extends State<MoveNoteDialog> {
             ),
             const SizedBox(height: 24),
 
-            // 3. Sách hiện tại (Read-only)
             const Text(
               'Cuốn sách hiện tại',
               style: TextStyle(color: Color(0xFF354152), fontWeight: FontWeight.w500),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 8), // Đã thêm const tại dòng 62
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6), // Màu xám nhạt
+                color: const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Text(
@@ -95,9 +89,8 @@ class _MoveNoteDialogState extends State<MoveNoteDialog> {
             ),
             const SizedBox(height: 16),
 
-            // 4. Dropdown chọn sách mới
-            Row(
-              children: const [
+            const Row(
+              children: [
                 Text(
                   'Chuyển sang cuốn sách',
                   style: TextStyle(color: Color(0xFF354152), fontWeight: FontWeight.w500),
@@ -129,9 +122,8 @@ class _MoveNoteDialogState extends State<MoveNoteDialog> {
                 });
               },
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 32), // Đã thêm const tại dòng 99
 
-            // 5. Nút bấm (Footer)
             Row(
               children: [
                 Expanded(
@@ -148,19 +140,17 @@ class _MoveNoteDialogState extends State<MoveNoteDialog> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    // Chỉ cho bấm khi đã chọn sách (selectedBook khác null)
                     onPressed: selectedBook == null
-                        ? null // Disable nút nếu chưa chọn
+                        ? null
                         : () {
-                      // Logic chuyển sách
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Đã chuyển sang: $selectedBook')),
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF155DFC), // Xanh dương
-                      disabledBackgroundColor: const Color(0xFFD1D5DC), // Xám khi disable
+                      backgroundColor: const Color(0xFF155DFC),
+                      disabledBackgroundColor: const Color(0xFFD1D5DC),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       elevation: 0,

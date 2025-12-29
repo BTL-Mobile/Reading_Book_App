@@ -111,7 +111,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 24), // Đã thêm const tại dòng 126
 
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -123,9 +123,9 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
+                          const Column( // Thêm const cho Column
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text('Tạo Flashcard', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
                               SizedBox(height: 4),
                               Text('Tự động tạo flashcard từ ghi chú này', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),

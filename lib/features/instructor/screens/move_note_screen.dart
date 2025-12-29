@@ -1,120 +1,164 @@
-// File: lib/features/instructor/screens/move_note_screen.dart
 import 'package:flutter/material.dart';
 
-class MoveNoteScreen extends StatefulWidget {
-  const MoveNoteScreen({super.key});
+class MoveNoteDialog extends StatefulWidget {
+  const MoveNoteDialog({super.key});
 
   @override
-  State<MoveNoteScreen> createState() => _MoveNoteScreenState();
+  State<MoveNoteDialog> createState() => _MoveNoteDialogState();
 }
 
-class _MoveNoteScreenState extends State<MoveNoteScreen> {
-  // Danh sách sách giả lập
+class _MoveNoteDialogState extends State<MoveNoteDialog> {
   final List<String> books = [
-    'Atomic Habits',
     'Deep Work',
     'Thinking, Fast and Slow',
     'Nhà Giả Kim',
     'Đắc Nhân Tâm'
   ];
 
-  // Sách đang được chọn (Mặc định là sách hiện tại)
-  String selectedBook = 'Atomic Habits';
+  String? selectedBook;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Chuyển sang sách khác',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: false,
-      ),
-      body: SafeArea(
+      child: Container(
+        padding: const EdgeInsets.all(24.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Danh sách sách (Radio List)
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                itemCount: books.length,
-                separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFE5E7EB)),
-                itemBuilder: (context, index) {
-                  final bookName = books[index];
-                  return RadioListTile<String>(
-                    title: Text(
-                      bookName,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: selectedBook == bookName ? const Color(0xFF155DFC) : const Color(0xFF101727),
-                      ),
-                    ),
-                    value: bookName,
-                    groupValue: selectedBook,
-                    activeColor: const Color(0xFF155DFC),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedBook = value!;
-                      });
-                    },
-                  );
-                },
-              ),
-            ),
-
-            // 2. Footer Buttons (Hủy / Lưu)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: Color(0xFFD0D5DB)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: const Text('Hủy', style: TextStyle(color: Color(0xFF354152), fontSize: 16)),
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Chuyển ghi chú sang sách khác',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF101727),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Logic chuyển sách (API) sẽ viết ở đây
-                        Navigator.pop(context);
+                ),
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(Icons.close, color: Colors.grey),
+                )
+              ],
+            ),
+            const SizedBox(height: 16),
 
-                        // Hiện thông báo thành công
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Đã chuyển sang sách "$selectedBook"')),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF9810FA), // Màu tím theo thiết kế Figma
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        elevation: 0,
-                      ),
-                      child: const Text('Chuyển sách', style: TextStyle(color: Colors.white, fontSize: 16)),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFDE585)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Color(0xFF963B00), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Ghi chú sẽ được chuyển sang cuốn sách mới và không còn liên kết với cuốn sách hiện tại.',
+                      style: TextStyle(color: Color(0xFF963B00), fontSize: 14, height: 1.4),
                     ),
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 24),
+
+            const Text(
+              'Cuốn sách hiện tại',
+              style: TextStyle(color: Color(0xFF354152), fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8), // Thêm const tại dòng 62
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'Atomic Habits',
+                style: TextStyle(color: Color(0xFF354152), fontSize: 16),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            const Row(
+              children: [
+                Text(
+                  'Chuyển sang cuốn sách',
+                  style: TextStyle(color: Color(0xFF354152), fontWeight: FontWeight.w500),
+                ),
+                Text(' *', style: TextStyle(color: Colors.red)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                hintText: '-- Chọn cuốn sách --',
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFFD0D5DB)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFFD0D5DB)),
+                ),
+              ),
+              value: selectedBook,
+              items: books.map((book) {
+                return DropdownMenuItem(value: book, child: Text(book));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedBook = value;
+                });
+              },
+            ),
+            const SizedBox(height: 32), // Thêm const tại dòng 99
+
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: Color(0xFFD0D5DB)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Hủy', style: TextStyle(color: Color(0xFF354152), fontSize: 16)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: selectedBook == null
+                        ? null
+                        : () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Đã chuyển sang: $selectedBook')),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF155DFC),
+                      disabledBackgroundColor: const Color(0xFFD1D5DC),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Chuyển', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

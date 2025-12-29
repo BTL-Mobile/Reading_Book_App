@@ -18,22 +18,19 @@ class TrashScreen extends StatelessWidget {
             gradient: LinearGradient(colors: [Color(0xFF155CFB), Color(0xFF432DD7)]),
           ),
         ),
-        // Override lại style title vì dùng gradient
         titleSpacing: 0,
         toolbarHeight: 60,
       ),
-      // Fix lại Appbar chuẩn trắng như thiết kế trong ảnh thùng rác
       body: Column(
         children: [
-          // Custom AppBar giả lập (nếu muốn giống hệt ảnh nền trắng, chữ đen)
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-            child: Row(
+            child: const Row(
               children: [
-                const BackButton(color: Colors.black),
-                const Expanded(child: Center(child: Text("Thùng rác", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)))),
-                const SizedBox(width: 48), // Cân bằng
+                BackButton(color: Colors.black),
+                Expanded(child: Center(child: Text("Thùng rác", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)))),
+                SizedBox(width: 48),
               ],
             ),
           ),
@@ -41,7 +38,6 @@ class TrashScreen extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                // Cảnh báo vàng
                 Container(
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(12),
@@ -50,8 +46,8 @@ class TrashScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: const Color(0xFFFDE68A)),
                   ),
-                  child: Row(
-                    children: const [
+                  child: const Row( // Thêm const tại dòng 32, 33
+                    children: [
                       Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706)),
                       SizedBox(width: 12),
                       Expanded(
@@ -65,9 +61,8 @@ class TrashScreen extends StatelessWidget {
                 ),
 
                 const Spacer(),
-                // Icon thùng rác
                 Icon(Icons.delete_outline, size: 80, color: Colors.grey.shade400),
-                const SizedBox(height: 16),
+                const SizedBox(height: 16), // Thêm const tại dòng 53
                 Text("Thùng rác trống", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
                 const SizedBox(height: 8),
                 Text("Các ghi chú đã xóa sẽ xuất hiện ở đây", style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),

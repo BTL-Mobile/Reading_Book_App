@@ -36,15 +36,15 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFF6EE7B7)),
                     ),
-                    child: Row(
+                    child: const Row( // Thêm const tại dòng 39, 41
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.check_circle_outline, color: Color(0xFF059669)),
-                        const SizedBox(width: 12),
+                        Icon(Icons.check_circle_outline, color: Color(0xFF059669)),
+                        SizedBox(width: 12),
                         Expanded(
-                          child: Column(
+                          child: Column( // Thêm const tại dòng 44, 45
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text('Nhận diện thành công!', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
                               SizedBox(height: 4),
                               Text('Bạn có thể chỉnh sửa văn bản bên dưới nếu cần', style: TextStyle(fontSize: 13, color: Color(0xFF065F46))),
@@ -62,15 +62,14 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                     height: 200,
                     width: double.infinity,
                     decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
-                    // Placeholder ảnh
                   ),
                   const SizedBox(height: 20),
 
-                  Row(
+                  const Row( // Thêm const tại dòng 69, 71
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Văn bản đã nhận diện', style: TextStyle(fontWeight: FontWeight.w600)),
-                      const Text('136/5000', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text('Văn bản đã nhận diện', style: TextStyle(fontWeight: FontWeight.w600)),
+                      Text('136/5000', style: TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                   const SizedBox(height: 8),

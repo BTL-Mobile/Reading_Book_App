@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart'; // Import Firebase
 // Import màn hình trang chủ (Danh sách ghi chú)
 import 'features/instructor/screens/notes_screen.dart';
+// Import Seeder
+import 'core/utils/firebase_seeder.dart';
 
 void main() async {
   // Đảm bảo các dịch vụ của Flutter đã sẵn sàng trước khi gọi Firebase
@@ -11,6 +13,11 @@ void main() async {
   try {
     await Firebase.initializeApp();
     debugPrint(">>> KẾT NỐI FIREBASE THÀNH CÔNG!");
+
+    // --- KÍCH HOẠT SEED TẠI ĐÂY ---
+    // Gọi hàm nạp dữ liệu mẫu vào Firestore
+    await FirebaseSeeder.seedNotes();
+
   } catch (e) {
     debugPrint(">>> LỖI KẾT NỐI FIREBASE: $e");
   }
@@ -30,7 +37,7 @@ class MyApp extends StatelessWidget {
       // Cấu hình giao diện chung (Theme) cho toàn bộ App
       theme: ThemeData(
         useMaterial3: true,
-        fontFamily: 'Roboto', // Bạn có thể đổi thành 'Arimo' nếu đã thêm font vào pubspec.yaml
+        fontFamily: 'Roboto',
 
         // Màu nền chung cho các màn hình (Xám rất nhạt chuẩn Figma)
         scaffoldBackgroundColor: const Color(0xFFF9FAFB),
