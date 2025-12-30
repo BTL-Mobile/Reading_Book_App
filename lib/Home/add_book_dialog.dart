@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../models/book_model.dart';
+import '../services/book_service.dart';
+import 'google_book_search_screen.dart';
 
 class AddBookDialog extends StatefulWidget {
   const AddBookDialog({super.key});
@@ -8,7 +11,92 @@ class AddBookDialog extends StatefulWidget {
 }
 
 class _AddBookDialogState extends State<AddBookDialog> {
-  int _selectedShelf = 0;
+  final BookService _bookService = BookService();
+
+  // Khởi tạo Controllers
+  final _titleController = TextEditingController();
+  final _authorController = TextEditingController();
+  final _categoryController =
+      TextEditingController(); // Controller cho thể loại
+  final _imageController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _totalPagesController = TextEditingController();
+
+  int _selectedShelf = 0; // 0: Muốn đọc, 1: Đang đọc, 2: Đã đọc
+  bool _isLoading = false;
+
+  Future<void> _handleSave() async {
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Vui lòng nhập tên sách!"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Xác định trạng thái
+      String status = 'want_to_read';
+      if (_selectedShelf == 1) status = 'reading';
+      if (_selectedShelf == 2) status = 'read';
+
+      final newBook = Book(
+        id: '',
+        title: _titleController.text.trim(),
+        author: _authorController.text.trim().isEmpty
+            ? "Chưa cập nhật"
+            : _authorController.text.trim(),
+        imageUrl: _imageController.text.trim().isEmpty
+            ? 'https://via.placeholder.com/150'
+            : _imageController.text.trim(),
+        description: _descriptionController.text.trim(),
+
+        // Lấy category từ ô nhập liệu
+        category: _categoryController.text.trim().isEmpty
+            ? "Khác"
+            : _categoryController.text.trim(),
+
+        status: status,
+        content: '',
+        totalPages: int.tryParse(_totalPagesController.text.trim()) ?? 0,
+        currentPage: 0,
+      );
+
+      await _bookService.addBook(newBook);
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Thêm sách thành công!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Lỗi: $e")));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _authorController.dispose();
+    _categoryController.dispose(); // Dispose category controller
+    _imageController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +111,6 @@ class _AddBookDialogState extends State<AddBookDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -31,51 +118,79 @@ class _AddBookDialogState extends State<AddBookDialog> {
                     "Thêm sách mới",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Colors.grey),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                  TextButton.icon(
+                    onPressed: () async {
+                      // Mở màn hình tìm kiếm và chờ kết quả trả về
+                      final Book? result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const GoogleBookSearchScreen(),
+                        ),
+                      );
+
+                      // Nếu có kết quả (người dùng đã chọn sách), điền vào các ô
+                      if (result != null) {
+                        setState(() {
+                          _titleController.text = result.title;
+                          _authorController.text = result.author;
+                          _imageController.text = result.imageUrl;
+                          _descriptionController.text = result.description;
+                          _categoryController.text = result.category;
+                          // content thì Google không có nên vẫn để trống để nhập tay sau
+                        });
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.travel_explore,
+                      color: Colors.blue,
+                    ), // Icon quả địa cầu
+                    label: const Text("Google Auto"),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
 
-              // 2. Input
-              const Text(
-                "Tìm kiếm sách",
-                style: TextStyle(fontWeight: FontWeight.w500),
+              // Form nhập liệu
+              _buildTextField("Tên sách *", _titleController, Icons.book),
+              const SizedBox(height: 12),
+              _buildTextField(
+                "Tác giả",
+                _authorController,
+                Icons.person_outline,
               ),
-              const SizedBox(height: 8),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: "Nhập tên sách hoặc tác giả...",
-                  hintStyle: TextStyle(
-                    color: Colors.grey.shade400,
-                    fontSize: 14,
-                  ),
-                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2D68FF)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
 
-              // 3. Chọn Kệ sách
+              // Ô NHẬP THỂ LOẠI (Nhập tay)
+              _buildTextField(
+                "Thể loại",
+                _categoryController,
+                Icons.category_outlined,
+              ),
+
+              const SizedBox(height: 12),
+              _buildTextField(
+                "Link ảnh bìa (URL)",
+                _imageController,
+                Icons.image_outlined,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                "Mô tả ngắn",
+                _descriptionController,
+                Icons.description_outlined,
+                maxLines: 2,
+              ),
+              const SizedBox(height: 12),
+              // ...
+              _buildTextField(
+                "Tổng số trang",
+                _totalPagesController,
+                Icons.numbers,
+                maxLines: 1,
+              ),
+              const SizedBox(height: 12),
+
+              // Chọn Kệ sách
               const Text(
                 "Kệ sách",
                 style: TextStyle(fontWeight: FontWeight.w500),
@@ -88,12 +203,7 @@ class _AddBookDialogState extends State<AddBookDialog> {
                       child: Padding(
                         padding: EdgeInsets.only(right: i < 2 ? 8.0 : 0),
                         child: GestureDetector(
-                          onTap: () {
-                            // setState
-                            setState(() {
-                              _selectedShelf = i;
-                            });
-                          },
+                          onTap: () => setState(() => _selectedShelf = i),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -120,40 +230,9 @@ class _AddBookDialogState extends State<AddBookDialog> {
                     ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // 4. Mẹo
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.lightbulb_outline,
-                      color: Colors.amber,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        "Mẹo: Sử dụng nút \"Quét mã\" để thêm sách nhanh hơn bằng cách quét mã vạch trên bìa sách giấy!",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade700,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 24),
 
-              // 5. Buttons
+              // Buttons
               Row(
                 children: [
                   Expanded(
@@ -161,12 +240,6 @@ class _AddBookDialogState extends State<AddBookDialog> {
                       height: 45,
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.grey.shade300),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
                         child: const Text(
                           "Hủy",
                           style: TextStyle(color: Colors.black),
@@ -179,23 +252,26 @@ class _AddBookDialogState extends State<AddBookDialog> {
                     child: SizedBox(
                       height: 45,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        onPressed: _isLoading ? null : _handleSave,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2D68FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 0,
                         ),
-                        child: const Text(
-                          "Lưu",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                "Lưu",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -203,6 +279,30 @@ class _AddBookDialogState extends State<AddBookDialog> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    String hint,
+    TextEditingController controller,
+    IconData icon, {
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: hint,
+        prefixIcon: Icon(icon, color: Colors.grey.shade400),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
         ),
       ),
     );

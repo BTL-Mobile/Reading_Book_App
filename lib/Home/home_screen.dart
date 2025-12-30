@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'add_book_dialog.dart';
 import 'update_proress_dialog.dart';
 import 'book_reading_screen.dart';
+import '../services/book_service.dart'; // Add this import
+import '../models/book_model.dart'; // Add this import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,32 +14,62 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  final BookService _bookService = BookService(); // Add this
+  String _selectedFilter = 'all'; // Add this for filtering
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5FA),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSearchBar(),
-                  const SizedBox(height: 20),
-                  _buildDailyReviewCard(),
-                  const SizedBox(height: 20),
-                  _buildFilterChips(),
-                  const SizedBox(height: 20),
-                  _buildBookItem(),
-                ],
-              ),
+      body: StreamBuilder<List<Book>>(
+        // Wrap the body in StreamBuilder
+        stream: _bookService.getBooksStream(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          final books = snapshot.data ?? [];
+          final filteredBooks = _selectedFilter == 'all'
+              ? books
+              : books.where((book) => book.status == _selectedFilter).toList();
+          final wantToReadCount = books
+              .where((b) => b.status == 'want_to_read')
+              .length;
+          final readingCount = books.where((b) => b.status == 'reading').length;
+          final readCount = books.where((b) => b.status == 'read').length;
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSearchBar(),
+                      const SizedBox(height: 20),
+                      _buildDailyReviewCard(),
+                      const SizedBox(height: 20),
+                      _buildFilterChips(
+                        wantToReadCount,
+                        readingCount,
+                        readCount,
+                      ), // Pass counts
+                      const SizedBox(height: 20),
+                      ...filteredBooks.map(
+                        (book) => _buildBookCard(book),
+                      ), // Display list of books
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -280,50 +312,80 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFilterChips() {
+  Widget _buildFilterChips(int wantToRead, int reading, int read) {
+    // Update to take counts
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _buildChip("Muốn đọc (1)", false),
+          _buildChip(
+            "Tất cả (${wantToRead + reading + read})",
+            _selectedFilter == 'all',
+            () => setState(() => _selectedFilter = 'all'),
+          ),
           const SizedBox(width: 10),
-          _buildChip("Đang đọc (1)", true),
+          _buildChip(
+            "Muốn đọc ($wantToRead)",
+            _selectedFilter == 'want_to_read',
+            () => setState(() => _selectedFilter = 'want_to_read'),
+          ),
           const SizedBox(width: 10),
-          _buildChip("Đã đọc (1)", false),
+          _buildChip(
+            "Đang đọc ($reading)",
+            _selectedFilter == 'reading',
+            () => setState(() => _selectedFilter = 'reading'),
+          ),
+          const SizedBox(width: 10),
+          _buildChip(
+            "Đã đọc ($read)",
+            _selectedFilter == 'read',
+            () => setState(() => _selectedFilter = 'read'),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildChip(String label, bool isActive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF2D68FF) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: isActive ? null : Border.all(color: Colors.grey.shade300),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF2D68FF).withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : null,
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isActive ? Colors.white : Colors.grey.shade700,
-          fontWeight: FontWeight.w600,
+  Widget _buildChip(String label, bool isActive, VoidCallback onTap) {
+    // Update to take onTap
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF2D68FF) : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: isActive ? null : Border.all(color: Colors.grey.shade300),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF2D68FF).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.white : Colors.grey.shade700,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildBookItem() {
+  Widget _buildBookCard(Book book) {
+    double progressValue = 0;
+    if (book.totalPages > 0) {
+      progressValue = book.currentPage / book.totalPages;
+    }
+    progressValue = progressValue.clamp(0.0, 1.0);
+    // Rename and update to take Book
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -343,7 +405,8 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const BookReadingScreen(),
+                  builder: (context) =>
+                      BookReadingScreen(book: book), // Pass book if needed
                 ),
               );
             },
@@ -353,11 +416,21 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Container(
+                  child: Image.network(
+                    book.imageUrl,
                     width: 80,
                     height: 120,
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.book, size: 40, color: Colors.grey),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 80,
+                      height: 120,
+                      color: Colors.grey.shade300,
+                      child: const Icon(
+                        Icons.book,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -365,18 +438,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Atomic Habits",
-                        style: TextStyle(
+                      Text(
+                        book.title,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF333333),
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        "James Clear",
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      Text(
+                        book.author,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -389,7 +465,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              "Kệ sách phòng khách",
+                              "Kệ sách phòng khách", // You can make this dynamic if needed
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade600,
@@ -400,23 +476,26 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
+
                       Row(
                         children: [
                           Expanded(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: const LinearProgressIndicator(
-                                value: 150 / 320,
+                                value:
+                                    0.47, // Placeholder; update with actual progress if tracked
                                 backgroundColor: Color(0xFFEEEEEE),
                                 color: Color(0xFF2D68FF),
                                 minHeight: 6,
                               ),
                             ),
                           ),
+
                           const SizedBox(width: 8),
-                          const Text(
-                            "47%",
-                            style: TextStyle(
+                          Text(
+                            "${(progressValue * 100).toInt()}%", // <--- SỬA: Hiển thị % thực
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF2D68FF),
@@ -425,9 +504,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        "Trang 150/320",
-                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      Text(
+                        "Trang ${book.currentPage}/${book.totalPages}", // <--- SỬA: Dùng dữ liệu thật
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -440,7 +522,8 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () {
               showDialog(
                 context: context,
-                builder: (context) => const UpdateProgressDialog(),
+                builder: (context) =>
+                    UpdateProgressDialog(book: book), // Pass book if needed
               );
             },
             child: Container(

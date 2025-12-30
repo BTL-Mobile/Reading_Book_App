@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'widgets/table_of_contents_drawer.dart';
 import 'widgets/quick_note_sheet.dart';
+import '../models/book_model.dart'; // Add this import
 
 class BookReadingScreen extends StatefulWidget {
-  const BookReadingScreen({super.key});
+  final Book book; // Add this
+  const BookReadingScreen({
+    super.key,
+    required this.book,
+  }); // Update constructor
 
   @override
   State<BookReadingScreen> createState() => _BookReadingScreenState();
@@ -47,19 +52,19 @@ class _BookReadingScreenState extends State<BookReadingScreen> {
         onPressed: () => Navigator.pop(context),
       ),
       title: Column(
-        children: const [
+        children: [
           Text(
-            "Atomic Habits",
-            style: TextStyle(
+            widget.book.title, // Use book title
+            style: const TextStyle(
               color: Colors.black,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 2),
+          const SizedBox(height: 2),
           Text(
             "James Clear",
-            style: TextStyle(color: Colors.grey, fontSize: 12),
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
         ],
       ),
