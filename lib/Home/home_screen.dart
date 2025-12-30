@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'add_book_dialog.dart';
 import 'update_proress_dialog.dart';
 import 'book_reading_screen.dart';
-import '../services/book_service.dart'; // Add this import
-import '../models/book_model.dart'; // Add this import
+import '../services/book_service.dart';
+import '../models/book_model.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -162,7 +163,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              // Open settings
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
             icon: const Icon(Icons.settings, color: Colors.white),
           ),
         ],
