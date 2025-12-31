@@ -1,12 +1,26 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart'; // Import Provider
 import 'firebase_options.dart';
 import 'auth/auth_screen.dart';
+import 'package:pht_04/providers/flashcard_provider.dart'; // Import FlashcardProvider
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+
+  runApp(
+    // Bọc ứng dụng trong MultiProvider
+    MultiProvider(
+      providers: [
+        // Khởi tạo FlashcardProvider và nạp dữ liệu mock
+        ChangeNotifierProvider<FlashcardProvider>(
+          create: (context) => FlashcardProvider()..loadMockData(),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

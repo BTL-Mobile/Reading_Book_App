@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
-import '../Home/home_screen.dart';
+import 'package:pht_04/main_screen.dart';
 import 'auth_styles.dart';
 
 class LoginForm extends StatefulWidget {
@@ -55,7 +55,7 @@ class _LoginFormState extends State<LoginForm> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       }
     } on FirebaseAuthException catch (e) {

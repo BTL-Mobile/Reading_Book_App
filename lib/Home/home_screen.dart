@@ -72,32 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF4C4DDC),
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.library_books),
-            label: "Thư viện",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.note_alt_outlined),
-            label: "Ghi chú",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.psychology),
-            label: "Ôn tập",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: "Cộng đồng",
-          ),
-        ],
-      ),
+
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
