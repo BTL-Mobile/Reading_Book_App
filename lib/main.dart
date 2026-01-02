@@ -14,9 +14,7 @@ void main() async {
     MultiProvider(
       providers: [
         // Khởi tạo FlashcardProvider và nạp dữ liệu mock
-        ChangeNotifierProvider<FlashcardProvider>(
-          create: (context) => FlashcardProvider()..loadMockData(),
-        ),
+        ChangeNotifierProvider(create: (_) => FlashcardProvider()..initData()),
       ],
       child: const MyApp(),
     ),

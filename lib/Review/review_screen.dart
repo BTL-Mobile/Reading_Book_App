@@ -2,6 +2,9 @@
 import 'package:provider/provider.dart';
 import '../providers/flashcard_provider.dart';
 import '../Home/settings_screen.dart';
+import '../models/flashcard_model.dart';
+import 'flashcard_library_screen.dart';
+import 'flashcard_player_screen.dart';
 
 class ReviewScreen extends StatelessWidget {
   const ReviewScreen({super.key});
@@ -39,6 +42,51 @@ class ReviewScreen extends StatelessWidget {
                     style: TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                   const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Ôn tập ghi nhớ",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Color(0xFF333333),
+                        ),
+                      ),
+
+                      // Nút bấm sang Thư viện
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FlashcardLibraryScreen(),
+                            ),
+                          );
+                        },
+                        child: const Row(
+                          children: [
+                            // Icon giả lập hình giá sách dọc |||\
+                            Icon(
+                              Icons.view_column_outlined,
+                              size: 18,
+                              color: Color(0xFF2D68FF),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              "Thư viện",
+                              style: TextStyle(
+                                color: Color(0xFF2D68FF),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
 
                   // 3. Stats Row
                   Row(
@@ -111,9 +159,13 @@ class ReviewScreen extends StatelessWidget {
                           child: ElevatedButton.icon(
                             onPressed: provider.dueCount > 0
                                 ? () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text("Bắt đầu học..."),
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => FlashcardPlayerScreen(
+                                          // Truyền danh sách các thẻ cần ôn (Due Cards) sang
+                                          dueCards: provider.dueFlashcards,
+                                        ),
                                       ),
                                     );
                                   }
