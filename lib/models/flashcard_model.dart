@@ -2,13 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Flashcard {
   final String id;
-  final String bookId; // Liên kết với sách nào
-  final String frontText; // Mặt trước (Câu hỏi)
-  final String backText; // Mặt sau (Đáp án)
-  final DateTime nextReview; // Ngày ôn tập tiếp theo
-  final int interval; // Khoảng cách ngày (dùng cho thuật toán lặp lại)
-  final double easinessFactor; // Độ dễ (dùng cho thuật toán)
-  final int streak; // Chuỗi ngày nhớ liên tục
+  final String bookId;
+  final String frontText;
+  final String backText;
+  final DateTime nextReview;
+  final int interval;
+  final double easinessFactor;
+  final int streak;
 
   Flashcard({
     required this.id,
@@ -21,13 +21,17 @@ class Flashcard {
     this.streak = 0,
   });
 
-  factory Flashcard.fromMap(Map<String, dynamic> data, String documentId) {
+  // 👇 ĐÂY LÀ HÀM BẠN ĐANG THIẾU
+  factory Flashcard.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return Flashcard(
-      id: documentId,
+      id: doc.id,
       bookId: data['bookId'] ?? '',
       frontText: data['frontText'] ?? '',
       backText: data['backText'] ?? '',
-      nextReview: (data['nextReview'] as Timestamp).toDate(),
+      // Xử lý an toàn: Nếu null thì lấy ngày hiện tại
+      nextReview:
+          (data['nextReview'] as Timestamp?)?.toDate() ?? DateTime.now(),
       interval: data['interval'] ?? 0,
       easinessFactor: (data['easinessFactor'] ?? 2.5).toDouble(),
       streak: data['streak'] ?? 0,
@@ -39,7 +43,7 @@ class Flashcard {
       'bookId': bookId,
       'frontText': frontText,
       'backText': backText,
-      'nextReview': nextReview,
+      'nextReview': Timestamp.fromDate(nextReview),
       'interval': interval,
       'easinessFactor': easinessFactor,
       'streak': streak,
