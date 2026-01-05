@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pht_04/Home/home_screen.dart';
 import 'package:pht_04/Review/review_screen.dart';
+import 'package:pht_04/Community/community_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,7 +17,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const Center(child: Text('Màn hình Ghi chú')),
     const ReviewScreen(),
-    const Center(child: Text('Màn hình Cộng đồng')),
+    const CommunityScreen(),
   ];
 
   void _onItemTapped(int index) => setState(() => _selectedIndex = index);
