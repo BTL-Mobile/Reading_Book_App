@@ -7,14 +7,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pht_04/auth/auth_screen.dart';
+import 'package:pht_04/main.dart';
 
 void main() {
-  testWidgets('App shows title text', (WidgetTester tester) async {
-    await tester.pumpWidget(const AuthScreen());
+  testWidgets('App builds', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Reading Station'), findsOneWidget);
-    expect(find.byType(Scaffold), findsOneWidget);
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

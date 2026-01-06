@@ -10,16 +10,10 @@ class CommunityAppHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 10,
-        bottom: 20,
+        top: MediaQuery.of(context).padding.top + 32,
+        bottom: 32,
       ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF2962FF), Color(0xFF448AFF)],
-        ),
-      ),
+      decoration: const BoxDecoration(color: Colors.blueAccent),
       child: const Column(
         children: [
           Text(

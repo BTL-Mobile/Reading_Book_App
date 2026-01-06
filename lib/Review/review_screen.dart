@@ -1,8 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/flashcard_provider.dart';
-import '../Home/settings_screen.dart';
-import '../models/flashcard_model.dart';
 import 'flashcard_library_screen.dart';
 import 'flashcard_player_screen.dart';
 
@@ -252,7 +250,7 @@ class ReviewScreen extends StatelessWidget {
   // --- WIDGET HEADER (Giữ nguyên) ---
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 20),
+      padding: const EdgeInsets.only(top: 32, left: 32, right: 32, bottom: 32),
       width: double.infinity,
       decoration: const BoxDecoration(color: Colors.blueAccent),
       child: Row(
