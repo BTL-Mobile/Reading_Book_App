@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'add_friend_modal.dart';
+import 'add_friend_modal.dart'; // Import modal
 
 // 1. Header Xanh của App
 class CommunityAppHeader extends StatelessWidget {
@@ -41,7 +41,7 @@ class CommunityAppHeader extends StatelessWidget {
   }
 }
 
-// 2. Header "Mạng xã hội"
+// 2. Header "Mạng xã hội" (Đã gắn sự kiện mở Modal)
 class SocialHeader extends StatelessWidget {
   const SocialHeader({super.key});
 
@@ -62,18 +62,18 @@ class SocialHeader extends StatelessWidget {
               ),
             ),
             Text(
-              "3 người bạn",
+              "Kết nối bạn bè",
               style: TextStyle(fontSize: 13, color: Colors.grey),
             ),
           ],
         ),
         ElevatedButton.icon(
           onPressed: () {
+            // 👇 BẤM NÚT THÊM -> MỞ MODAL
             showModalBottomSheet(
               context: context,
-              isScrollControlled: true, // Để modal có thể full màn hình
-              backgroundColor:
-                  Colors.transparent, // Nền trong suốt để bo góc đẹp
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
               builder: (context) => const AddFriendModal(),
             );
           },
@@ -96,7 +96,7 @@ class SocialHeader extends StatelessWidget {
   }
 }
 
-// 3. Tabs Hoạt động / Bạn bè
+// 3. Tabs
 class CommunityTabs extends StatelessWidget {
   final int selectedTab;
   final Function(int) onTabSelected;
@@ -147,7 +147,7 @@ class CommunityTabs extends StatelessWidget {
   }
 }
 
-// 4. Thẻ Mời bạn bè
+// 4. Thẻ Mời bạn bè (Đã gắn sự kiện mở Modal)
 class InviteFriendCard extends StatelessWidget {
   const InviteFriendCard({super.key});
 
@@ -174,7 +174,15 @@ class InviteFriendCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              // 👇 BẤM NÚT MỜI -> CŨNG MỞ MODAL
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const AddFriendModal(),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2962FF),
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
@@ -197,7 +205,7 @@ class InviteFriendCard extends StatelessWidget {
   }
 }
 
-// 5. Section Phổ biến & Info Card
+// 5. Các Widget phụ khác
 class TrendingSection extends StatelessWidget {
   const TrendingSection({super.key});
 
