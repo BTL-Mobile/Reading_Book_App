@@ -14,7 +14,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
   final BookService _bookService = BookService(); // Add this
   String _selectedFilter = 'all'; // Add this for filtering
 

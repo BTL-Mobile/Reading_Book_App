@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+// Firebase Auth import removed because it's not used in this file
 import 'package:intl/intl.dart'; // Để format ngày tháng nếu cần
 
 // Import các file con (Đảm bảo đường dẫn đúng với dự án của bạn)
@@ -19,7 +19,7 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen> {
   int _selectedTab = 0; // 0: Hoạt động, 1: Bạn bè
-  final _auth = FirebaseAuth.instance;
+  // FirebaseAuth instance not used directly here
 
   @override
   Widget build(BuildContext context) {
