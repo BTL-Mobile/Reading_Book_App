@@ -5,11 +5,17 @@
 *.swp
 .DS_Store
 .atom/
+<<<<<<< HEAD
 .build/
 .buildlog/
 .history
 .svn/
 .swiftpm/
+=======
+.buildlog/
+.history
+.svn/
+>>>>>>> feature/instructor-notes-ui
 migrate_working_dir/
 
 # IntelliJ related
@@ -27,11 +33,18 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+<<<<<<< HEAD
+=======
+.flutter-plugins
+>>>>>>> feature/instructor-notes-ui
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
+<<<<<<< HEAD
 /coverage/
+=======
+>>>>>>> feature/instructor-notes-ui
 
 # Symbolication related
 app.*.symbols

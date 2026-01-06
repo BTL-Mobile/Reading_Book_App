@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pht_04/Home/home_screen.dart';
 import 'package:pht_04/Review/review_screen.dart';
 import 'package:pht_04/Community/community_screen.dart';
+import 'package:pht_04/features/instructor/screens/notes_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -15,7 +16,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const HomeScreen(),
-    const Center(child: Text('Màn hình Ghi chú')),
+    const NotesScreen(), // ✅ Gắn màn Note thật vào đây
     const ReviewScreen(),
     const CommunityScreen(),
   ];
