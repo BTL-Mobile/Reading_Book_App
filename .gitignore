@@ -1,0 +1,16 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# IDE
+.idea/
+*.iml
+
+# Platforms (không commit nếu không yêu cầu)
+android/
+ios/
+macos/
+windows/
+linux/
