@@ -84,7 +84,11 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
 
     final content = _contentController.text.trim();
     final pageNumber = int.tryParse(_pageController.text.trim()) ?? 0;
-    final bookId = _bookIdMap[selectedBook] ?? 'book_flutter_01';
+
+    // ✅ bookTitle chính là option dropdown user chọn
+    final bookTitle = (selectedBook ?? '').trim();
+    // ✅ bookId lấy theo map, fallback nếu thiếu
+    final bookId = _bookIdMap[bookTitle] ?? 'book_flutter_01';
 
     setState(() => _saving = true);
     try {
@@ -92,11 +96,12 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
         content: content,
         pageNumber: pageNumber,
         bookId: bookId,
+        bookTitle: bookTitle.isEmpty ? 'Sách' : bookTitle, // ✅ thêm
         userId: 'test_user_001',
       );
 
       if (!mounted) return;
-      Navigator.pop(context, true); // trả về true để NotesScreen show SnackBar
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -139,14 +144,13 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     DropdownButtonFormField<String>(
                       decoration: _inputDecoration(hintText: 'Chọn sách'),
                       value: selectedBook,
-                      items: ['Atomic Habits', 'Deep Work']
+                      items: _bookIdMap.keys
                           .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                           .toList(),
                       onChanged: (v) => setState(() => selectedBook = v),
                       validator: (value) => value == null ? 'Vui lòng chọn sách' : null,
                     ),
                     const SizedBox(height: 20),
-
                     _buildLabel('Số trang (tùy chọn)'),
                     const SizedBox(height: 8),
                     TextFormField(
@@ -162,20 +166,19 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
-
                     _buildLabel('Nội dung ghi chú', isRequired: true),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _contentController,
                       maxLines: 8,
-                      decoration: _inputDecoration(hintText: 'Viết ý tưởng, trích dẫn...').copyWith(counterText: ""),
+                      decoration:
+                      _inputDecoration(hintText: 'Viết ý tưởng, trích dẫn...').copyWith(counterText: ""),
                       validator: (value) {
                         if ((value ?? '').trim().isEmpty) return 'Vui lòng nhập nội dung';
                         return null;
                       },
                     ),
                     const SizedBox(height: 12),
-
                     Row(
                       children: [
                         Expanded(
@@ -206,7 +209,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                 ),
               ),
             ),
-
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
               decoration: const BoxDecoration(
