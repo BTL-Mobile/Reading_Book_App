@@ -1,0 +1,30 @@
+{
+  "hosting": {
+    "public": "build/web",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "reading-station-d0b53",
+          "appId": "1:519873449870:android:738e72be0a5338799e5edf",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "reading-station-d0b53",
+          "configurations": {
+            "android": "1:519873449870:android:738e72be0a5338799e5edf",
+            "ios": "1:519873449870:ios:bf6943eb08ae2fc69e5edf",
+            "macos": "1:519873449870:ios:bf6943eb08ae2fc69e5edf",
+            "web": "1:519873449870:web:ae6f18248e7672549e5edf",
+            "windows": "1:519873449870:web:469e7aca9f4ec5d79e5edf"
+          }
+        }
+      }
+    }
+  }
+}
