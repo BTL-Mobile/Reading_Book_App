@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
     "name": "pht_04",
     "short_name": "pht_04",
+=======
+    "name": "reading_book_app",
+    "short_name": "reading_book_app",
+>>>>>>> feature/instructor-notes-ui
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

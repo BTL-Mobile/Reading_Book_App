@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
+<<<<<<< HEAD
         android:label="pht_04"
+=======
+        android:label="reading_book_app"
+>>>>>>> feature/instructor-notes-ui
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+
 import 'widgets/table_of_contents_drawer.dart';
 import 'widgets/quick_note_sheet.dart';
-import '../models/book_model.dart'; // Add this import
+import '../models/book_model.dart';
 
 class BookReadingScreen extends StatefulWidget {
-  final Book book; // Add this
+  final Book book;
   const BookReadingScreen({
     super.key,
     required this.book,
-  }); // Update constructor
+  });
 
   @override
   State<BookReadingScreen> createState() => _BookReadingScreenState();
@@ -28,15 +29,14 @@ class _BookReadingScreenState extends State<BookReadingScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
-
       drawer: TableOfContentsDrawer(
         currentChapterIndex: _currentChapterIndex,
         onChapterTap: (chapter) {
+          // ignore: avoid_print
           print("Đã chọn: ${chapter['title']}");
           Navigator.pop(context);
         },
       ),
-
       appBar: _buildAppBar(),
       body: _buildBody(),
       bottomNavigationBar: _buildBottomBar(),
@@ -54,7 +54,7 @@ class _BookReadingScreenState extends State<BookReadingScreen> {
       title: Column(
         children: [
           Text(
-            widget.book.title, // Use book title
+            widget.book.title,
             style: const TextStyle(
               color: Colors.black,
               fontSize: 16,
@@ -63,7 +63,7 @@ class _BookReadingScreenState extends State<BookReadingScreen> {
           ),
           const SizedBox(height: 2),
           Text(
-            "James Clear",
+            widget.book.author, // ✅ dùng author thật thay vì hardcode
             style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
         ],
@@ -80,20 +80,17 @@ class _BookReadingScreenState extends State<BookReadingScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     "Trang $_currentPage / $_totalPages",
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: remindingTextStyle(),
                   ),
                   Text(
                     "${(_progress * 100).toInt()}%",
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: remindingTextStyle(),
                   ),
                 ],
               ),
@@ -110,6 +107,9 @@ class _BookReadingScreenState extends State<BookReadingScreen> {
     );
   }
 
+  TextStyle remindingTextStyle() =>
+      const TextStyle(fontSize: 12, color: Colors.grey);
+
   Widget _buildBody() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
@@ -118,7 +118,7 @@ class _BookReadingScreenState extends State<BookReadingScreen> {
         children: const [
           Text(
             "Chương 1: Sức mạnh của thói quen nhỏ\n\n"
-            "Vào một ngày tháng Mười năm 2003, tại Anh Quốc, một vị huấn luyện viên đã nhận một công việc khó khăn. Đội tuyển xe đạp Anh Quốc có thành tích tệ hại trong gần một thế kỷ. Kể từ năm 1908, các tay đua người Anh chỉ giành được một huy chương vàng duy nhất tại Thế vận hội Olympic...\n\n(Nội dung giả lập)...",
+                "Vào một ngày tháng Mười năm 2003, tại Anh Quốc, một vị huấn luyện viên đã nhận một công việc khó khăn. Đội tuyển xe đạp Anh Quốc có thành tích tệ hại trong gần một thế kỷ. Kể từ năm 1908, các tay đua người Anh chỉ giành được một huy chương vàng duy nhất tại Thế vận hội Olympic...\n\n(Nội dung giả lập)...",
             textAlign: TextAlign.justify,
             style: TextStyle(
               fontSize: 18,
@@ -153,28 +153,33 @@ class _BookReadingScreenState extends State<BookReadingScreen> {
           children: [
             TextButton.icon(
               onPressed: () {},
-              icon: const Icon(
-                Icons.arrow_back_ios,
-                size: 14,
-                color: Colors.black,
-              ),
+              icon: const Icon(Icons.arrow_back_ios, size: 14, color: Colors.black),
               label: const Text("Trước", style: TextStyle(color: Colors.black)),
             ),
             Row(
               children: [
                 IconButton(
-                  onPressed: () {
-                    showModalBottomSheet(
+                  onPressed: () async {
+                    final saved = await showModalBottomSheet<bool>(
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
-                      builder: (context) =>
-                          QuickNoteSheet(currentPage: _currentPage),
+                      builder: (context) => QuickNoteSheet(
+                        currentPage: _currentPage,
+                        bookId: widget.book.id,
+                        bookTitle: widget.book.title,
+                      ),
                     );
+
+                    // (tuỳ bạn) có thể show snackbar
+                    if (saved == true && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Đã lưu ghi chú nhanh')),
+                      );
+                    }
                   },
                   icon: const Icon(Icons.edit_outlined, color: Colors.black54),
                 ),
-
                 IconButton(
                   onPressed: () {
                     _scaffoldKey.currentState?.openDrawer();

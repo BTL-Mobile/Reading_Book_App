@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAOgB_NgCf9Zt7s_04PupJkUW87VD4Aesg',
-    appId: '1:519873449870:android:e9397c33b5e0e9ef9e5edf',
+    appId: '1:519873449870:android:738e72be0a5338799e5edf',
     messagingSenderId: '519873449870',
     projectId: 'reading-station-d0b53',
     storageBucket: 'reading-station-d0b53.firebasestorage.app',
@@ -59,28 +59,29 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDGB6UOIFrF2AOXUilMhgsmdm5Lk9KCQSo',
-    appId: '1:519873449870:ios:c8f982dee2b914449e5edf',
+    appId: '1:519873449870:ios:bf6943eb08ae2fc69e5edf',
     messagingSenderId: '519873449870',
     projectId: 'reading-station-d0b53',
     storageBucket: 'reading-station-d0b53.firebasestorage.app',
-    iosBundleId: 'com.example.pht04',
+    iosBundleId: 'com.example.readingBookApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyDGB6UOIFrF2AOXUilMhgsmdm5Lk9KCQSo',
-    appId: '1:519873449870:ios:c8f982dee2b914449e5edf',
+    appId: '1:519873449870:ios:bf6943eb08ae2fc69e5edf',
     messagingSenderId: '519873449870',
     projectId: 'reading-station-d0b53',
     storageBucket: 'reading-station-d0b53.firebasestorage.app',
-    iosBundleId: 'com.example.pht04',
+    iosBundleId: 'com.example.readingBookApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyApn-b5lX0yX0VHOSkenY7GtmSpkkO9_38',
-    appId: '1:519873449870:web:eae242d41d54ad8b9e5edf',
+    appId: '1:519873449870:web:469e7aca9f4ec5d79e5edf',
     messagingSenderId: '519873449870',
     projectId: 'reading-station-d0b53',
     authDomain: 'reading-station-d0b53.firebaseapp.com',
     storageBucket: 'reading-station-d0b53.firebasestorage.app',
   );
+
 }

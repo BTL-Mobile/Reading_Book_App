@@ -1,88 +1,108 @@
 import 'package:flutter/material.dart';
 import 'ocr_modal.dart';
-import 'package:pht_04/services/note_service.dart';
-import 'package:pht_04/models/note_model.dart';
+
+import '../models/note.dart';
+import '../services/note_service.dart';
+
+// books
+import '../../../services/book_service.dart';
+import '../../../models/book_model.dart';
 
 class EditNoteScreen extends StatefulWidget {
-  final NoteModel note; // 1. Nhận dữ liệu ghi chú cần sửa
-
-  const EditNoteScreen({super.key, required this.note});
+  const EditNoteScreen({super.key});
 
   @override
   State<EditNoteScreen> createState() => _EditNoteScreenState();
 }
 
 class _EditNoteScreenState extends State<EditNoteScreen> {
-  late TextEditingController _bookTitleController;
-  late TextEditingController _pageController;
-  late TextEditingController _contentController;
-  bool _isLoading = false;
+  final _noteService = NoteService();
+  final _bookService = BookService();
+
+  TextEditingController? _contentController;
+  Note? _note;
+
+  String? selectedBookId;
+  String? selectedBookTitle;
+
+  bool _saving = false;
 
   @override
-  void initState() {
-    super.initState();
-    // 2. Điền dữ liệu cũ vào các ô nhập
-    _bookTitleController = TextEditingController(text: widget.note.bookTitle);
-    _pageController = TextEditingController(text: widget.note.pageNumber);
-    _contentController = TextEditingController(text: widget.note.content);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_note != null) return;
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+
+    if (args is Note) {
+      _note = args;
+    } else if (args is Map && args['note'] is Note) {
+      _note = args['note'];
+    }
+
+    final n = _note;
+    if (n == null) return;
+
+    _contentController = TextEditingController(text: n.content);
+    selectedBookId = n.bookId;
+    selectedBookTitle = n.bookTitle;
   }
 
   @override
   void dispose() {
-    _bookTitleController.dispose();
-    _pageController.dispose();
-    _contentController.dispose();
+    _contentController?.dispose();
     super.dispose();
   }
 
-  // 3. Hàm xử lý cập nhật
-  Future<void> _handleUpdate() async {
-    final title = _bookTitleController.text.trim();
-    final page = _pageController.text.trim();
-    final content = _contentController.text.trim();
+  Future<void> _save() async {
+    final n = _note;
+    if (n == null || _contentController == null || _saving) return;
 
-    if (title.isEmpty || content.isEmpty) {
+    final content = _contentController!.text.trim();
+    final bookId = (selectedBookId ?? '').trim();
+    final bookTitle = (selectedBookTitle ?? '').trim();
+
+    if (content.isEmpty || bookId.isEmpty || bookTitle.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập tên sách và nội dung')),
+        const SnackBar(content: Text('Vui lòng chọn sách và nhập nội dung.')),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
-
-    // Tạo object mới giữ nguyên ID và Ngày tạo
-    final updatedNote = NoteModel(
-      id: widget.note.id,
-      bookTitle: title,
-      pageNumber: page,
-      content: content,
-      hasFlashcard: widget.note.hasFlashcard,
-      createdAt: widget.note.createdAt,
-      isDeleted: false,
-    );
-
+    setState(() => _saving = true);
     try {
-      await NoteService().updateNote(updatedNote);
+      await _noteService.updateNote(
+        noteId: n.id,
+        content: content,
+        pageNumber: n.pageNumber,
+        bookId: bookId,
+        bookTitle: bookTitle,
+      );
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Đã lưu thay đổi')));
-        Navigator.pop(context); // Về màn hình chi tiết (đã refresh)
-        Navigator.pop(context); // Về màn hình danh sách (để refresh list)
-      }
+      if (!mounted) return;
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã lưu thay đổi')),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
-        setState(() => _isLoading = false);
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lưu thất bại: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final n = _note;
+    if (n == null || _contentController == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -96,51 +116,98 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
           'Chỉnh sửa ghi chú',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        centerTitle: false,
       ),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tên Sách (Đổi thành TextField để hỗ trợ mọi tên sách từ DB)
-                    TextFormField(
-                      controller: _bookTitleController,
-                      decoration: InputDecoration(
-                        labelText: 'Tên sách',
-                        hintText: 'Nhập tên sách...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.book_outlined,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    /// BOOK DROPDOWN (realtime)
+                    StreamBuilder<List<Book>>(
+                      stream: _bookService.getBooksStream(),
+                      builder: (context, snapshot) {
+                        final books = snapshot.data ?? const <Book>[];
 
-                    // Số trang (Thêm mới vì NoteModel có trường này)
-                    TextFormField(
-                      controller: _pageController,
-                      decoration: InputDecoration(
-                        labelText: 'Số trang',
-                        hintText: 'VD: Trang 15',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.bookmark_border,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                        if (snapshot.connectionState == ConnectionState.waiting &&
+                            books.isEmpty) {
+                          return const SizedBox(
+                            height: 56,
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
 
-                    // Nút OCR (Giữ nguyên logic của bạn)
+                        if (books.isEmpty) {
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: const Color(0xFFD1D5DB)),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'Chưa có sách nào trong Firestore (collection: books)',
+                            ),
+                          );
+                        }
+
+                        final exists = selectedBookId != null &&
+                            books.any((b) => b.id == selectedBookId);
+
+                        final value =
+                            exists ? selectedBookId : books.first.id;
+
+                        if (!exists) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!mounted) return;
+                            setState(() {
+                              selectedBookId = books.first.id;
+                              selectedBookTitle = books.first.title;
+                            });
+                          });
+                        }
+
+                        return DropdownButtonFormField<String>(
+                          value: value,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
+                          ),
+                          items: books
+                              .map(
+                                (b) => DropdownMenuItem<String>(
+                                  value: b.id,
+                                  child: Text(
+                                    b.title,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (bookId) {
+                            if (bookId == null) return;
+                            final picked =
+                                books.firstWhere((x) => x.id == bookId);
+                            setState(() {
+                              selectedBookId = picked.id;
+                              selectedBookTitle = picked.title;
+                            });
+                          },
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    /// OCR
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -153,9 +220,9 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
                             builder: (context) => const OcrModal(),
                           );
                           if (result != null && result is String) {
-                            setState(
-                              () => _contentController.text += "\n$result",
-                            );
+                            setState(() {
+                              _contentController!.text += '\n$result';
+                            });
                           }
                         },
                         icon: const Icon(
@@ -165,25 +232,26 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
                         label: const Text('Thêm văn bản từ ảnh (OCR)'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF155DFC),
-                          side: const BorderSide(color: Color(0xFF8DC5FF)),
+                          side:
+                              const BorderSide(color: Color(0xFF8DC5FF)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 20),
 
-                    // Nội dung ghi chú
+                    /// CONTENT
                     TextFormField(
                       controller: _contentController,
-                      maxLines: 12, // Tăng độ cao để dễ nhìn
+                      maxLines: 10,
                       decoration: InputDecoration(
-                        hintText: 'Nội dung ghi chú...',
+                        hintText: 'Nội dung',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        alignLabelWithHint: true,
                       ),
                     ),
                   ],
@@ -191,27 +259,27 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
               ),
             ),
 
-            // Nút Lưu thay đổi
+            /// SAVE
             Container(
               padding: const EdgeInsets.all(16),
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleUpdate,
+                onPressed: _saving ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF155DFC),
                   minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
+                child: _saving
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Text(
                         'Lưu thay đổi',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(color: Colors.white),
                       ),
               ),
             ),
