@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/note.dart';
 import '../services/note_service.dart';
@@ -17,6 +19,16 @@ class NoteDetailScreen extends StatelessWidget {
     final mo = dt.month.toString().padLeft(2, '0');
     final yyyy = dt.year.toString();
     return '$hh:$mm  $dd/$mo/$yyyy';
+  }
+
+  // ✅ Text để copy / share
+  String _buildShareText(Note note) {
+    return '''
+📚 Sách: ${note.bookTitle}
+📄 Trang: ${note.pageNumber}
+
+${note.content}
+'''.trim();
   }
 
   @override
@@ -98,7 +110,10 @@ class NoteDetailScreen extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 '${note.pageNumber}',
-                                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF111827),
+                                ),
                               ),
                               const SizedBox(width: 10),
                               if (note.isConverted)
@@ -111,7 +126,11 @@ class NoteDetailScreen extends StatelessWidget {
                                   ),
                                   child: const Text(
                                     'Flashcard',
-                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFFB45309),
+                                    ),
                                   ),
                                 ),
                             ],
@@ -151,7 +170,10 @@ class NoteDetailScreen extends StatelessWidget {
                                           SizedBox(width: 8),
                                           Text(
                                             'Flashcard đang hoạt động',
-                                            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD97706)),
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFFD97706),
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -159,12 +181,20 @@ class NoteDetailScreen extends StatelessWidget {
                                       if (question.isNotEmpty) ...[
                                         const Text(
                                           'Câu hỏi / Tiêu đề:',
-                                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF92400E)),
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF92400E),
+                                          ),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           question,
-                                          style: const TextStyle(fontSize: 14, color: Color(0xFFB45309), fontWeight: FontWeight.w600),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Color(0xFFB45309),
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ] else
                                         const Text(
@@ -179,11 +209,38 @@ class NoteDetailScreen extends StatelessWidget {
 
                           if (note.isConverted) const SizedBox(height: 20),
 
+                          // ✅ SỬA: bật Sao chép + Chia sẻ
                           Row(
                             children: [
-                              Expanded(child: _buildGrayButton(Icons.copy, 'Sao chép', onTap: () {})),
+                              Expanded(
+                                child: _buildGrayButton(
+                                  Icons.copy,
+                                  'Sao chép',
+                                  onTap: () async {
+                                    final text = _buildShareText(note);
+                                    await Clipboard.setData(ClipboardData(text: text));
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Đã sao chép ghi chú')),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
                               const SizedBox(width: 12),
-                              Expanded(child: _buildGrayButton(Icons.share_outlined, 'Chia sẻ', onTap: () {})),
+                              Expanded(
+                                child: _buildGrayButton(
+                                  Icons.share_outlined,
+                                  'Chia sẻ',
+                                  onTap: () async {
+                                    final text = _buildShareText(note);
+                                    await Share.share(
+                                      text,
+                                      subject: 'Ghi chú: ${note.bookTitle} (Trang ${note.pageNumber})',
+                                    );
+                                  },
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -216,8 +273,6 @@ class NoteDetailScreen extends StatelessWidget {
                         },
                       ),
                       const SizedBox(height: 12),
-
-                      // ✅ ĐÃ XÓA NÚT "Chuyển sang sách khác"
 
                       _buildActionButton(
                         text: 'Tạo Flashcard học tập',
@@ -272,7 +327,6 @@ class NoteDetailScreen extends StatelessWidget {
                           }
                         },
                       ),
-
                       const SizedBox(height: 30),
                     ],
                   ),

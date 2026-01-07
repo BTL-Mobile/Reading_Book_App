@@ -1,20 +1,23 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart'; // Import Provider
-import 'firebase_options.dart';
-import 'auth/auth_screen.dart';
-import 'package:pht_04/providers/flashcard_provider.dart'; // Import FlashcardProvider
 
-void main() async {
+import 'firebase_options.dart';
+import 'main_screen.dart';
+import 'providers/flashcard_provider.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(
-    // Bọc ứng dụng trong MultiProvider
     MultiProvider(
       providers: [
-        // Khởi tạo FlashcardProvider và nạp dữ liệu mock
-        ChangeNotifierProvider(create: (_) => FlashcardProvider()..initData()),
+        ChangeNotifierProvider(
+          create: (_) => FlashcardProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -26,11 +29,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Reading Station',
-      theme: ThemeData(primarySwatch: Colors.teal),
-      home: const AuthScreen(),
+      home: MainScreen(),
     );
   }
 }

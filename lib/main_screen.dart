@@ -14,14 +14,18 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomeScreen(),
-    const NotesScreen(), // ✅ Gắn màn Note thật vào đây
+  void _onItemTapped(int index) => setState(() => _selectedIndex = index);
+
+  // ✅ Hàm chuyển sang tab Ôn tập
+  void _goToReviewTab() => setState(() => _selectedIndex = 2);
+
+  late final List<Widget> _pages = [
+    // ✅ Truyền callback sang Home để bấm nút là đổi tab
+    HomeScreen(onStartReview: _goToReviewTab),
+    const NotesScreen(),
     const ReviewScreen(),
     const CommunityScreen(),
   ];
-
-  void _onItemTapped(int index) => setState(() => _selectedIndex = index);
 
   @override
   Widget build(BuildContext context) {
