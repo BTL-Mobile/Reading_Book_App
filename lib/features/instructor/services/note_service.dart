@@ -33,12 +33,15 @@ class NoteService {
   }
 
   // ================= ADD NOTE =================
+  /// ✅ SỬA: thêm isFlashcard để lưu đúng trạng thái "Flashcard"
+  /// - App bạn đang dùng field isConverted để hiển thị badge Flashcard
   Future<void> addNote({
     required String content,
     required int pageNumber,
     required String bookId,
     required String bookTitle,
     String? userId,
+    bool isFlashcard = false, // ✅ thêm
   }) async {
     final now = Timestamp.now();
     await _db.collection('note').add({
@@ -47,7 +50,10 @@ class NoteService {
       'bookId': bookId,
       'bookTitle': bookTitle,
       'status': 'active',
-      'isConverted': false,
+
+      // ✅ QUAN TRỌNG: trước đây luôn false, giờ theo toggle
+      'isConverted': isFlashcard,
+
       'createdAt': now,
       'updatedAt': now,
       'deletedAt': null,
@@ -106,6 +112,7 @@ class NoteService {
       'createdAt': Timestamp.now(),
     });
 
+    // ✅ tạo flashcard thì note chắc chắn converted
     await _db.collection('note').doc(noteId).update({
       'isConverted': true,
       'updatedAt': Timestamp.now(),
