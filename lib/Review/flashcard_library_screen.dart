@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:intl/intl.dart';
 import '../providers/flashcard_provider.dart';
-import '../models/flashcard_model.dart';
-import '../services/flashcard_service.dart';
+
+import 'dialogs/create_flashcard_dialog.dart';
+import 'dialogs/edit_flashcard_dialog.dart';
+import 'dialogs/delete_confirm_dialog.dart';
 import 'flashcard_player_screen.dart';
 
 class FlashcardLibraryScreen extends StatefulWidget {
@@ -14,481 +15,266 @@ class FlashcardLibraryScreen extends StatefulWidget {
 }
 
 class _FlashcardLibraryScreenState extends State<FlashcardLibraryScreen> {
-  int _filterIndex = 0; // 0: Tất cả, 1: Cần ôn, 2: Sắp tới
+  int tab = 0; // 0 all, 1 due, 2 upcoming
+
+  List<dynamic> _safeList(List<dynamic> Function() getter) {
+    try {
+      return getter();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  String _safe(dynamic card, String Function() getter, {String fallback = ''}) {
+    try {
+      return getter().toString();
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  int _safeInt(dynamic card, int Function() getter, {int fallback = 0}) {
+    try {
+      return getter();
+    } catch (_) {
+      return fallback;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<FlashcardProvider>();
-    final allCards = provider.flashcards;
-    final now = DateTime.now();
+    final dynamic p = context.watch<FlashcardProvider>();
 
-    // Logic lọc thẻ
-    List<Flashcard> displayedCards = [];
-    if (_filterIndex == 0) {
-      displayedCards = allCards;
-    } else if (_filterIndex == 1) {
-      displayedCards = allCards
-          .where(
-            (c) =>
-                c.nextReview.isBefore(now) ||
-                c.nextReview.isAtSameMomentAs(now),
-          )
-          .toList();
-    } else {
-      displayedCards = allCards
-          .where((c) => c.nextReview.isAfter(now))
-          .toList();
-    }
+    final all = _safeList(() => p.allFlashcards);
+    final due = _safeList(() => p.dueFlashcards);
+    final upcoming = _safeList(() => p.upcomingFlashcards);
+
+    final list = switch (tab) {
+      0 => all,
+      1 => due,
+      _ => upcoming,
+    };
+
+    final dueCount = due.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Nền xám nhạt
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFF6D00),
-        title: const Text(
-          "Thư viện Flashcard",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        centerTitle: true,
+        backgroundColor: const Color(0xFFE07A00),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        title: const Text(
+          'Thư viện Flashcard',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+        ),
       ),
-
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFFFF6D00),
-        onPressed: () => _showAddDialog(context),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+        backgroundColor: const Color(0xFFE07A00),
+        onPressed: () async {
+          await showDialog(
+            context: context,
+            builder: (_) => const CreateFlashcardDialog(),
+          );
+        },
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
-
-      // 👇 SỬA ĐỔI QUAN TRỌNG Ở ĐÂY 👇
-      // Thay vì Column chia cắt, dùng ListView chứa tất cả mọi thứ
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          100,
-        ), // Padding tổng thể (Bottom 100 để tránh nút FAB che)
+      body: Column(
         children: [
-          // 1. NÚT ÔN TẬP (Sẽ cuộn cùng danh sách)
-          if (displayedCards.isNotEmpty) ...[
-            SizedBox(
+          // Big orange play button
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: SizedBox(
               width: double.infinity,
+              height: 64,
               child: ElevatedButton.icon(
-                onPressed: () {
+                onPressed: dueCount == 0
+                    ? null
+                    : () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          FlashcardPlayerScreen(dueCards: displayedCards),
-                    ),
+                    MaterialPageRoute(builder: (_) => const FlashcardPlayerScreen()),
                   );
                 },
-                icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+                icon: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 28),
                 label: Text(
-                  _filterIndex == 1
-                      ? "Ôn tập ${displayedCards.length} thẻ cần ôn ngay"
-                      : "Học thử ${displayedCards.length} thẻ danh sách này",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
+                  'Ôn tập $dueCount flashcard ngay',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE65100),
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 4,
-                  shadowColor: Colors.orange.withOpacity(0.4),
+                  backgroundColor: const Color(0xFFE07A00),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  elevation: 8,
                 ),
               ),
             ),
-            const SizedBox(height: 16), // Khoảng cách dưới nút
-          ],
+          ),
 
-          // 2. BỘ LỌC (Chips) (Sẽ cuộn cùng danh sách)
-          SingleChildScrollView(
-            scrollDirection:
-                Axis.horizontal, // Cho phép lướt ngang nếu nhiều nút quá
+          // Tabs (chips)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
             child: Row(
               children: [
-                _buildFilterChip("Tất cả (${allCards.length})", 0),
-                const SizedBox(width: 8),
-                _buildFilterChip("Cần ôn (${provider.dueCount})", 1),
-                const SizedBox(width: 8),
-                _buildFilterChip(
-                  "Sắp tới (${allCards.length - provider.dueCount})",
-                  2,
+                _ChipTab(
+                  text: 'Tất cả (${all.length})',
+                  selected: tab == 0,
+                  onTap: () => setState(() => tab = 0),
+                ),
+                const SizedBox(width: 10),
+                _ChipTab(
+                  text: 'Cần ôn (${due.length})',
+                  selected: tab == 1,
+                  onTap: () => setState(() => tab = 1),
+                ),
+                const SizedBox(width: 10),
+                _ChipTab(
+                  text: 'Sắp tới (${upcoming.length})',
+                  selected: tab == 2,
+                  onTap: () => setState(() => tab = 2),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16), // Khoảng cách giữa bộ lọc và danh sách
-          // 3. DANH SÁCH THẺ (Hoặc thông báo trống)
-          if (displayedCards.isEmpty)
-            Container(
-              height: 300, // Chiều cao tạm để căn giữa nội dung trống
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.inbox_outlined, size: 60, color: Colors.grey[300]),
-                  const SizedBox(height: 12),
-                  Text(
-                    "Không có thẻ nào",
-                    style: TextStyle(color: Colors.grey[500], fontSize: 16),
+
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+              itemCount: list.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, i) {
+                final c = list[i];
+
+                final bookTitle = _safe(c, () => c.bookTitle, fallback: _safe(c, () => c.title, fallback: ''));
+                final front = _safe(c, () => c.frontText, fallback: _safe(c, () => c.question, fallback: ''));
+                final dueText = _safe(c, () => c.dueText, fallback: (tab == 2 ? 'Sau 2 ngày' : 'Hôm nay'));
+                final reviewed = _safeInt(c, () => c.reviewCount, fallback: 5);
+
+                return Container(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
-                ],
-              ),
-            )
-          else
-            // Dùng toán tử spread (...) để bung danh sách thẻ ra thành các phần tử con của ListView cha
-            ...displayedCards.map((card) {
-              return Padding(
-                padding: const EdgeInsets.only(
-                  bottom: 12.0,
-                ), // Khoảng cách giữa các thẻ
-                child: _buildCardItem(context, card),
-              );
-            }).toList(),
-        ],
-      ),
-    );
-  }
-
-  // --- Widget nút lọc ---
-  Widget _buildFilterChip(String label, int index) {
-    bool isSelected = _filterIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _filterIndex = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF2D68FF) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: isSelected ? null : Border.all(color: Colors.grey.shade300),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey.shade600,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- Widget hiển thị Card ---
-  Widget _buildCardItem(BuildContext context, Flashcard card) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16), // Bo góc mềm mại hơn
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.book,
-                      size: 16,
-                      color: Colors.grey,
-                    ), // Icon sách đậm
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        card.bookId.isNotEmpty ? card.bookId : "Chưa phân loại",
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.menu_book_rounded, color: Color(0xFF6B7280)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              bookTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              await showDialog(
+                                context: context,
+                                builder: (_) => EditFlashcardDialog(card: c),
+                              );
+                            },
+                            icon: const Icon(Icons.edit_outlined, color: Color(0xFF6B7280)),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              final ok = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => const DeleteConfirmDialog(),
+                              );
+                              if (ok == true) {
+                                try {
+                                  await p.deleteFlashcard(c.id);
+                                } catch (_) {
+                                  // nếu provider của bạn khác, không làm gì để tránh crash
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFF6B7280)),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.edit_outlined,
-                      size: 20,
-                      color: Colors.grey,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    tooltip: "Sửa",
-                    onPressed: () => _showEditDialog(context, card),
+                      const SizedBox(height: 10),
+                      Text(
+                        front,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          height: 1.35,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_month_rounded, size: 18, color: Color(0xFF9CA3AF)),
+                          const SizedBox(width: 8),
+                          Text(
+                            dueText,
+                            style: const TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(width: 18),
+                          Text(
+                            'Đã ôn $reviewed lần',
+                            style: const TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      size: 20,
-                      color: Colors.grey,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    tooltip: "Xóa",
-                    onPressed: () => _confirmDelete(context, card.id),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            card.frontText,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Color(0xFF333333),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            card.backText,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Divider(height: 1, color: Color(0xFFEEEEEE)),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildInfoBadge(
-                Icons.calendar_month,
-                _formatDate(card.nextReview),
-                card.nextReview.isBefore(DateTime.now())
-                    ? Colors.orange
-                    : Colors.grey,
-              ),
-              const SizedBox(width: 16),
-              _buildInfoBadge(
-                Icons.refresh,
-                "Streak: ${card.streak}",
-                Colors.grey,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoBadge(IconData icon, String text, Color color) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 6),
-        Text(
-          text,
-          style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = date.difference(now).inDays;
-    if (date.isBefore(now)) return "Hôm nay";
-    if (difference == 0) return "Ngày mai";
-    if (difference < 7) return "Sau $difference ngày";
-    return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
-  }
-
-  // --- DIALOGS (Giữ nguyên phần Textbox như bạn yêu cầu) ---
-  void _showAddDialog(BuildContext context) {
-    final bookCtrl = TextEditingController(text: "Sách chung");
-    final frontCtrl = TextEditingController();
-    final backCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Tạo thẻ mới"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: bookCtrl,
-                decoration: const InputDecoration(
-                  labelText: "Tên sách / Chủ đề",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: frontCtrl,
-                decoration: const InputDecoration(
-                  labelText: "Mặt trước (Câu hỏi)",
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 4,
-                keyboardType: TextInputType.multiline,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: backCtrl,
-                decoration: const InputDecoration(
-                  labelText: "Mặt sau (Đáp án)",
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 5,
-                keyboardType: TextInputType.multiline,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Hủy", style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (frontCtrl.text.isEmpty || backCtrl.text.isEmpty) return;
-              Navigator.pop(context);
-              await FlashcardService().addCard(
-                bookCtrl.text.isEmpty ? "Chưa phân loại" : bookCtrl.text,
-                frontCtrl.text,
-                backCtrl.text,
-              );
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Đã thêm thẻ mới thành công!")),
                 );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6D00),
+              },
             ),
-            child: const Text("Tạo thẻ", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
+}
 
-  void _showEditDialog(BuildContext context, Flashcard card) {
-    final frontCtrl = TextEditingController(text: card.frontText);
-    final backCtrl = TextEditingController(text: card.backText);
+class _ChipTab extends StatelessWidget {
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Chỉnh sửa thẻ"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: frontCtrl,
-                decoration: const InputDecoration(
-                  labelText: "Mặt trước",
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 4,
-                keyboardType: TextInputType.multiline,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: backCtrl,
-                decoration: const InputDecoration(
-                  labelText: "Mặt sau",
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 5,
-                keyboardType: TextInputType.multiline,
-              ),
-            ],
+  const _ChipTab({
+    required this.text,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFF1E4CCB) : Colors.white,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: selected ? Colors.white : const Color(0xFF111827),
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Hủy"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await FlashcardService().updateCardContent(
-                card.id,
-                frontCtrl.text,
-                backCtrl.text,
-              );
-              if (context.mounted) Navigator.pop(context);
-            },
-            child: const Text("Lưu"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmDelete(BuildContext context, String cardId) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Xác nhận xóa"),
-        content: const Text("Bạn có chắc chắn muốn xóa thẻ này không?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Hủy"),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await FlashcardService().deleteCard(cardId);
-            },
-            child: const Text("Xóa", style: TextStyle(color: Colors.red)),
-          ),
-        ],
       ),
     );
   }

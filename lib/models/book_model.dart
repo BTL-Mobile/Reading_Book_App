@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Book {
   final String id;
   final String title;
@@ -18,23 +20,38 @@ class Book {
     required this.description,
     required this.category,
     required this.status,
-    this.content = '',
-    this.currentPage = 0,
-    this.totalPages = 0,
+    required this.content,
+    required this.currentPage,
+    required this.totalPages,
   });
 
-  factory Book.fromMap(Map<String, dynamic> data, String documentId) {
+  /// ✅ Parse từ Firestore document
+  factory Book.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
+
+    int _asInt(dynamic v, [int fallback = 0]) {
+      if (v is int) return v;
+      if (v is double) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? fallback;
+      return fallback;
+    }
+
+    String _asString(dynamic v, [String fallback = '']) {
+      if (v == null) return fallback;
+      return v.toString();
+    }
+
     return Book(
-      id: documentId,
-      title: data['title'] ?? 'Không có tiêu đề',
-      author: data['author'] ?? 'Ẩn danh',
-      imageUrl: data['imageUrl'] ?? 'https://via.placeholder.com/150',
-      description: data['description'] ?? '',
-      category: data['category'] ?? 'Khác',
-      status: data['status'] ?? 'want_to_read',
-      content: data['content'] ?? '',
-      currentPage: data['currentPage'] ?? 0,
-      totalPages: data['totalPages'] ?? 0,
+      id: doc.id,
+      title: _asString(data['title']),
+      author: _asString(data['author']),
+      imageUrl: _asString(data['imageUrl']),
+      description: _asString(data['description']),
+      category: _asString(data['category']),
+      status: _asString(data['status'], 'reading'),
+      content: _asString(data['content']), // Firestore có thể chưa có field này
+      currentPage: _asInt(data['currentPage']),
+      totalPages: _asInt(data['totalPages']),
     );
   }
 
@@ -49,6 +66,33 @@ class Book {
       'content': content,
       'currentPage': currentPage,
       'totalPages': totalPages,
+      // Không lưu id vào document, id là doc.id
     };
+  }
+
+  Book copyWith({
+    String? id,
+    String? title,
+    String? author,
+    String? imageUrl,
+    String? description,
+    String? category,
+    String? status,
+    String? content,
+    int? currentPage,
+    int? totalPages,
+  }) {
+    return Book(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      imageUrl: imageUrl ?? this.imageUrl,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      status: status ?? this.status,
+      content: content ?? this.content,
+      currentPage: currentPage ?? this.currentPage,
+      totalPages: totalPages ?? this.totalPages,
+    );
   }
 }

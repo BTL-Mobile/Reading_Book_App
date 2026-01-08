@@ -39,20 +39,33 @@ class NoteService {
     required String bookId,
     required String bookTitle,
     String? userId,
+    bool createFlashcardFlag = false, // ✅ đổi tên biến để không đè hàm
   }) async {
     final now = Timestamp.now();
+
+    // ✅ add() trả về DocumentReference
+    final DocumentReference<Map<String, dynamic>> noteRef =
     await _db.collection('note').add({
       'content': content,
       'pageNumber': pageNumber,
       'bookId': bookId,
       'bookTitle': bookTitle,
       'status': 'active',
-      'isConverted': false,
+      'isConverted': createFlashcardFlag, // ✅ QUAN TRỌNG: để hiện nhãn Flashcard
       'createdAt': now,
       'updatedAt': now,
       'deletedAt': null,
       if (userId != null) 'userId': userId,
     });
+
+    // ✅ chỉ tạo flashcard khi bật switch
+    if (createFlashcardFlag) {
+      await createFlashcard(
+        noteId: noteRef.id,
+        question: 'Câu hỏi/Tiêu đề về: $bookTitle',
+        answer: content,
+      );
+    }
   }
 
   // ================= UPDATE NOTE =================
@@ -93,7 +106,7 @@ class NoteService {
     await _db.collection('note').doc(noteId).delete();
   }
 
-  // ================= FLASHCARD (core) =================
+  // ================= FLASHCARD =================
   Future<void> createFlashcard({
     required String noteId,
     required String question,
@@ -104,6 +117,9 @@ class NoteService {
       'question': question,
       'answer': answer,
       'createdAt': Timestamp.now(),
+      'reviewCount': 0,
+      'dueAt': Timestamp.now(),
+      'lastReviewedAt': null,
     });
 
     await _db.collection('note').doc(noteId).update({
@@ -112,8 +128,6 @@ class NoteService {
     });
   }
 
-  // ================= FLASHCARD (compat - kiểu cũ) =================
-  /// Dùng khi dialog gọi theo dạng frontText/backText
   Future<void> createFlashcardFromNote({
     required String noteId,
     required String frontText,
@@ -126,7 +140,6 @@ class NoteService {
     );
   }
 
-  /// ✅ Dùng khi dialog của bạn gọi: createFlashcardFromNote(note: widget.note, ...)
   Future<void> createFlashcardFromNoteWithNote({
     required Note note,
     required String frontText,

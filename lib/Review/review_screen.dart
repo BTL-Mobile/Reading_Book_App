@@ -7,238 +7,280 @@ import 'flashcard_player_screen.dart';
 class ReviewScreen extends StatelessWidget {
   const ReviewScreen({super.key});
 
+  int _safeInt(dynamic p, int Function() getter, {int fallback = 0}) {
+    try {
+      return getter();
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  List<dynamic> _safeList(dynamic p, List<dynamic> Function() getter) {
+    try {
+      final v = getter();
+      return v;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  String _safeString(dynamic card, String Function() getter, {String fallback = ''}) {
+    try {
+      final v = getter();
+      return v.toString();
+    } catch (_) {
+      return fallback;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Lắng nghe dữ liệu
-    final provider = context.watch<FlashcardProvider>();
-    final now = DateTime.now();
+    final dynamic p = context.watch<FlashcardProvider>();
 
-    // Lấy tối đa 5 thẻ chưa đến hạn để hiện ở list dưới
-    final upcomingCards = provider.flashcards
-        .where((card) => card.nextReview.isAfter(now))
-        .take(5)
-        .toList();
+    final dueToday = _safeInt(p, () => p.dueToday);
+    final streak = _safeInt(p, () => p.streakDays);
+    final reviewedThisWeek = _safeInt(p, () => p.reviewedThisWeek);
+
+    final upcoming = _safeList(p, () => p.upcomingReviews);
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      // 👇 SỬA Ở ĐÂY: Dùng SingleChildScrollView bọc toàn bộ Body
-      body: SingleChildScrollView(
-        // Không dùng padding ở đây để Header tràn viền
+      backgroundColor: const Color(0xFFF3F4F6),
+      body: SafeArea(
         child: Column(
           children: [
-            // 1. Header nằm trong vùng cuộn -> Sẽ trôi đi khi vuốt
-            _buildHeader(context),
-
-            // 2. Phần nội dung còn lại
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+            // Header blue
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1E67FF),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 16,
+                    offset: Offset(0, 8),
+                  )
+                ],
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Hệ thống ôn tập ngắt quãng giúp bạn ghi nhớ lâu dài",
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Ôn tập ghi nhớ",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Color(0xFF333333),
-                        ),
-                      ),
-
-                      // Nút bấm sang Thư viện
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => FlashcardLibraryScreen(),
-                            ),
-                          );
-                        },
-                        child: const Row(
-                          children: [
-                            // Icon giả lập hình giá sách dọc |||\
-                            Icon(
-                              Icons.view_column_outlined,
-                              size: 18,
-                              color: Color(0xFF2D68FF),
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              "Thư viện",
-                              style: TextStyle(
-                                color: Color(0xFF2D68FF),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-
-                  // 3. Stats Row
-                  Row(
-                    children: [
-                      _buildSquareStatCard(
-                        "${provider.dueCount}",
-                        "Cần ôn\nhôm nay",
-                        const Color(0xFF2D68FF),
-                      ),
-                      const SizedBox(width: 12),
-                      _buildSquareStatCard(
-                        "${provider.streak}",
-                        "Chuỗi ngày",
-                        const Color(0xFF00C853),
-                      ),
-                      const SizedBox(width: 12),
-                      _buildSquareStatCard(
-                        "${provider.reviewedThisWeek}",
-                        "Đã ôn tuần\nnày",
-                        const Color(0xFFAA00FF),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 4. Main Action Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 24,
-                      horizontal: 16,
+                children: const [
+                  Text(
+                    'Trạm Đọc',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
                     ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFFDE7),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFFFFCC80),
-                        width: 1,
-                      ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'Trợ lý đọc sách chủ động & ghi nhớ',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
-                    child: Column(
+                  ),
+                ],
+              ),
+            ),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title row
+                    Row(
                       children: [
-                        const Icon(
-                          Icons.psychology,
-                          size: 56,
-                          color: Color(0xFFEF6C00),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          provider.dueCount > 0
-                              ? "Bạn có ${provider.dueCount} flashcard cần ôn tập"
-                              : "Bạn đã hoàn thành bài ôn tập!",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Color(0xFF333333),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        if (provider.dueCount > 0)
-                          const Text(
-                            "Chỉ mất khoảng 4 phút",
-                            style: TextStyle(color: Colors.grey, fontSize: 13),
-                          ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton.icon(
-                            onPressed: provider.dueCount > 0
-                                ? () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => FlashcardPlayerScreen(
-                                          // Truyền danh sách các thẻ cần ôn (Due Cards) sang
-                                          dueCards: provider.dueFlashcards,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                : null,
-                            icon: const Icon(
-                              Icons.play_arrow_rounded,
-                              color: Colors.white,
-                            ),
-                            label: const Text(
-                              "Bắt đầu ôn tập",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Ôn tập ghi nhớ',
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF111827),
+                                ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFEF6C00),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              SizedBox(height: 6),
+                              Text(
+                                'Hệ thống ôn tập ngắt quãng giúp bạn ghi nhớ lâu dài',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                              elevation: 0,
-                            ),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const FlashcardLibraryScreen()),
+                            );
+                          },
+                          child: Row(
+                            children: const [
+                              Icon(Icons.bar_chart_rounded, color: Color(0xFF1E67FF)),
+                              SizedBox(width: 6),
+                              Text(
+                                'Thư viện',
+                                style: TextStyle(
+                                  color: Color(0xFF1E67FF),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                ),
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // 3 stat cards
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            color: const Color(0xFF1E67FF),
+                            value: '$dueToday',
+                            label: 'Cần ôn\nhôm nay',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _StatCard(
+                            color: const Color(0xFF00B341),
+                            value: '$streak',
+                            label: 'Chuỗi ngày',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _StatCard(
+                            color: const Color(0xFF9B4DFF),
+                            value: '$reviewedThisWeek',
+                            label: 'Đã ôn tuần\nnày',
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 28),
 
-                  // 5. Lịch ôn tập sắp tới
-                  const Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: 18,
-                        color: Color(0xFF333333),
+                    const SizedBox(height: 18),
+
+                    // Big start card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7E6),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFF4B400), width: 2),
                       ),
-                      SizedBox(width: 8),
-                      Text(
-                        "Lịch ôn tập sắp tới",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Color(0xFF333333),
-                        ),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 6),
+                          const Icon(Icons.psychology_rounded, size: 56, color: Color(0xFFE07A00)),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Bạn có $dueToday flashcard cần ôn tập',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Chỉ mất khoảng ${(dueToday * 2).clamp(2, 30)} phút',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF6B7280),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 54,
+                            child: ElevatedButton.icon(
+                              onPressed: dueToday <= 0
+                                  ? null
+                                  : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const FlashcardPlayerScreen(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFE07A00),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                              ),
+                              icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+                              label: const Text(
+                                'Bắt đầu ôn tập',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                    ),
 
-                  if (upcomingCards.isEmpty)
-                    _buildEmptyState()
-                  else
-                    ...upcomingCards.map((card) {
-                      final daysLeft = card.nextReview
-                          .difference(DateTime.now())
-                          .inDays;
-                      final displayTime = daysLeft <= 0
-                          ? "Mai"
-                          : "Sau\n${daysLeft}d";
+                    const SizedBox(height: 16),
 
-                      return _buildUpcomingCard(
-                        displayTime,
-                        card.bookId.isNotEmpty
-                            ? card.bookId
-                            : "Thinking, Fast and Slow",
-                        card.frontText.isNotEmpty
-                            ? card.frontText
-                            : "Hệ thống 1...",
-                      );
-                    }),
+                    // Upcoming schedule card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.calendar_month_rounded, color: Color(0xFF374151)),
+                              SizedBox(width: 10),
+                              Text(
+                                'Lịch ôn tập sắp tới',
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          if (upcoming.isEmpty)
+                            const Text(
+                              'Chưa có lịch ôn tập sắp tới.',
+                              style: TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w600),
+                            )
+                          else
+                            _UpcomingRow(
+                              badgeText: _safeString(upcoming.first, () => upcoming.first.badgeText, fallback: 'Sau\n3d'),
+                              title: _safeString(upcoming.first, () => upcoming.first.title, fallback: 'Thinking, Fast and Slow'),
+                              subtitle: _safeString(upcoming.first, () => upcoming.first.subtitle, fallback: 'Hệ thống 1 (tư duy nhanh)...'),
+                            ),
+                        ],
+                      ),
+                    ),
 
-                  const SizedBox(height: 40),
-                ],
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
           ],
@@ -246,74 +288,49 @@ class ReviewScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  // --- WIDGET HEADER (Giữ nguyên) ---
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(top: 32, left: 32, right: 32, bottom: 32),
-      width: double.infinity,
-      decoration: const BoxDecoration(color: Colors.blueAccent),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment
-            .center, // Đổi lại thành spaceBetween để nút setting sang phải
-        children: [
-          const Column(
-            // Thêm const cho tối ưu
-            crossAxisAlignment:
-                CrossAxisAlignment.center, // Căn trái cho text đẹp hơn
-            children: [
-              Text(
-                "Trạm Đọc",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                "Trợ lý đọc sách chủ động & ghi nhớ",
-                style: TextStyle(color: Colors.white70, fontSize: 13),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+class _StatCard extends StatelessWidget {
+  final Color color;
+  final String value;
+  final String label;
 
-  // --- CÁC WIDGET CON KHÁC (Giữ nguyên) ---
-  Widget _buildSquareStatCard(String number, String label, Color color) {
-    return Expanded(
+  const _StatCard({
+    required this.color,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
       child: Container(
-        height: 88,
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(18),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              number,
+              value,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+                fontSize: 46,
+                fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 4),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  height: 1.2,
-                ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                height: 1.2,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -321,91 +338,68 @@ class ReviewScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildUpcomingCard(String timeBadge, String title, String content) {
+class _UpcomingRow extends StatelessWidget {
+  final String badgeText;
+  final String title;
+  final String subtitle;
+
+  const _UpcomingRow({
+    required this.badgeText,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            width: 64,
+            padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFE3F2FD),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFFE0ECFF),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Text(
-              timeBadge,
+              badgeText,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Color(0xFF1976D2),
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+                color: Color(0xFF1E67FF),
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Color(0xFF333333),
-                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  content,
+                  subtitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
+                  style: const TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w600),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.event_available, size: 40, color: Colors.grey),
-          const SizedBox(height: 8),
-          Text(
-            "Bạn không có lịch ôn tập nào sắp tới",
-            style: TextStyle(color: Colors.grey[600]),
-          ),
+          )
         ],
       ),
     );

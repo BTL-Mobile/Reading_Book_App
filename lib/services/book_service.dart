@@ -1,45 +1,65 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/book_model.dart';
 
 class BookService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Cách 1: Lấy danh sách sách (Stream) - Dữ liệu tự cập nhật realtime
+  /// ✅ CÁCH 1: Books dùng chung -> KHÔNG lọc userId, KHÔNG yêu cầu đăng nhập
   Stream<List<Book>> getBooksStream() {
-    return _firestore.collection('books').snapshots().map((snapshot) {
+    return _firestore
+        .collection('books')
+    // Nếu bạn gặp lỗi index/orderBy thì xóa dòng orderBy này
+        .orderBy('title')
+        .snapshots()
+        .map((snapshot) {
       return snapshot.docs.map((doc) {
-        return Book.fromMap(doc.data(), doc.id);
+        // ✅ dùng đúng factory trong model
+        return Book.fromFirestore(doc);
       }).toList();
     });
   }
 
-  // Cách 2: Lấy danh sách sách (Future) - Chỉ lấy 1 lần khi gọi
+  /// ✅ One-time: lấy 1 lần
   Future<List<Book>> getBooksOneTime() async {
-    QuerySnapshot snapshot = await _firestore.collection('books').get();
+    final snapshot =
+    await _firestore.collection('books').orderBy('title').get();
+
     return snapshot.docs.map((doc) {
-      return Book.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      return Book.fromFirestore(doc);
     }).toList();
   }
 
+  /// ✅ Thêm sách (books chung)
+  /// - không bắt buộc userId
+  /// - nếu đang đăng nhập thì vẫn gắn userId (optional, để về sau dùng)
   Future<void> addBook(Book book) async {
     try {
-      // Chuyển đổi từ object Book sang Map (JSON) để lưu lên Firebase
-      await _firestore.collection('books').add(book.toMap());
+      final data = book.toMap();
+
+      final uid = _auth.currentUser?.uid;
+      if (uid != null && uid.isNotEmpty) {
+        data['userId'] = uid;
+      }
+
+      data['createdAt'] = data['createdAt'] ?? FieldValue.serverTimestamp();
+      data['updatedAt'] = data['updatedAt'] ?? FieldValue.serverTimestamp();
+
+      await _firestore.collection('books').add(data);
     } catch (e) {
+      // ignore: avoid_print
       print("Lỗi thêm sách: $e");
       rethrow;
     }
   }
 
   Future<void> updateReadingProgress(
-    String bookId,
-    int currentPage,
-    int totalPages,
-  ) async {
+      String bookId,
+      int currentPage,
+      int totalPages,
+      ) async {
     try {
-      // Logic tự động chuyển trạng thái:
-      // - Nếu đọc > 0 trang -> Chuyển thành "reading" (Đang đọc)
-      // - Nếu đọc hết (current == total) -> Chuyển thành "read" (Đã đọc)
       String status = 'reading';
       if (currentPage >= totalPages && totalPages > 0) {
         status = 'read';
@@ -48,9 +68,11 @@ class BookService {
       await _firestore.collection('books').doc(bookId).update({
         'currentPage': currentPage,
         'totalPages': totalPages,
-        'status': status, // Cập nhật luôn trạng thái cho xịn
+        'status': status,
+        'updatedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
+      // ignore: avoid_print
       print("Lỗi cập nhật tiến độ: $e");
       rethrow;
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-// 🔧 IMPORT ĐÚNG NoteService trong project của bạn
+// ✅ Import đúng NoteService bạn đang dùng
 import '../../features/instructor/services/note_service.dart';
 
 class QuickNoteSheet extends StatefulWidget {
@@ -29,15 +30,25 @@ class _QuickNoteSheetState extends State<QuickNoteSheet> {
     final content = _controller.text.trim();
     if (content.isEmpty) return;
 
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bạn cần đăng nhập để lưu ghi chú.')),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
 
     try {
-      // ✅ DÙNG addNote (ĐÚNG VỚI NoteService CỦA BẠN)
       await _noteService.addNote(
         content: content,
+        pageNumber: widget.currentPage,
         bookId: widget.bookId,
         bookTitle: widget.bookTitle,
-        pageNumber: widget.currentPage,
+        userId: uid,
+        createFlashcardFlag: false, // Quick note mặc định không tạo flashcard
       );
 
       if (!mounted) return;
@@ -86,7 +97,6 @@ class _QuickNoteSheetState extends State<QuickNoteSheet> {
               style: const TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 12),
-
             TextField(
               controller: _controller,
               maxLines: 5,
@@ -97,9 +107,7 @@ class _QuickNoteSheetState extends State<QuickNoteSheet> {
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
-
             Row(
               children: [
                 Expanded(
