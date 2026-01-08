@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/flashcard_provider.dart';
+import '../../services/flashcard_service.dart';
 
 class CreateFlashcardDialog extends StatefulWidget {
   const CreateFlashcardDialog({super.key});
@@ -10,9 +9,15 @@ class CreateFlashcardDialog extends StatefulWidget {
 }
 
 class _CreateFlashcardDialogState extends State<CreateFlashcardDialog> {
-  final _title = TextEditingController();
+  final _service = FlashcardService();
+
+  // ✅ thêm bookId để lọc theo bookId
+  final _bookId = TextEditingController();
+
+  final _title = TextEditingController(); // bookTitle / chủ đề
   final _front = TextEditingController();
   final _back = TextEditingController();
+
   bool _saving = false;
 
   InputDecoration _dec(String label) {
@@ -34,6 +39,7 @@ class _CreateFlashcardDialogState extends State<CreateFlashcardDialog> {
 
   @override
   void dispose() {
+    _bookId.dispose();
     _title.dispose();
     _front.dispose();
     _back.dispose();
@@ -42,28 +48,53 @@ class _CreateFlashcardDialogState extends State<CreateFlashcardDialog> {
 
   Future<void> _create() async {
     if (_saving) return;
-    setState(() => _saving = true);
 
-    final dynamic p = context.read<FlashcardProvider>();
-    try {
-      // provider bạn có thể đặt tên khác -> try/catch để không crash compile/runtime
-      await p.createFlashcard(
-        title: _title.text.trim(),
-        question: _front.text.trim(),
-        answer: _back.text.trim(),
+    final bookId = _bookId.text.trim();
+    final bookTitle = _title.text.trim();
+    final front = _front.text.trim();
+    final back = _back.text.trim();
+
+    // ✅ validate
+    if (bookId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập BookId (vd: book_flutter_01)')),
       );
-    } catch (_) {
-      try {
-        await p.addFlashcard(
-          bookTitle: _title.text.trim(),
-          frontText: _front.text.trim(),
-          backText: _back.text.trim(),
-        );
-      } catch (_) {}
+      return;
+    }
+    if (bookTitle.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập Tên sách/Chủ đề')),
+      );
+      return;
+    }
+    if (front.isEmpty || back.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập đủ Mặt trước và Mặt sau')),
+      );
+      return;
     }
 
-    if (!mounted) return;
-    Navigator.pop(context, true);
+    setState(() => _saving = true);
+
+    try {
+      // ✅ tạo thẳng vào /flashcards theo bookId
+      await _service.addCard(
+        bookId,
+        front,
+        back,
+        bookTitle: bookTitle,
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi tạo thẻ: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   @override
@@ -83,20 +114,31 @@ class _CreateFlashcardDialogState extends State<CreateFlashcardDialog> {
               ),
             ),
             const SizedBox(height: 16),
+
+            // ✅ thêm BookId
+            TextField(
+              controller: _bookId,
+              decoration: _dec('BookId (vd: book_flutter_01)'),
+            ),
+            const SizedBox(height: 14),
+
             TextField(controller: _title, decoration: _dec('Tên sách/ Chủ đề')),
             const SizedBox(height: 14),
+
             TextField(
               controller: _front,
               maxLines: 5,
               decoration: _dec('Mặt trước'),
             ),
             const SizedBox(height: 14),
+
             TextField(
               controller: _back,
               maxLines: 5,
               decoration: _dec('Mặt sau'),
             ),
             const SizedBox(height: 16),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -118,7 +160,10 @@ class _CreateFlashcardDialogState extends State<CreateFlashcardDialog> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
-                      : const Text('Tạo thẻ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                      : const Text(
+                    'Tạo thẻ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  ),
                 ),
               ],
             )
